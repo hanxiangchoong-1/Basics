@@ -1,19 +1,12 @@
 import uuid
 import re
-from llama_index.core import SimpleDirectoryReader
 
-class DocumentProcessor:
+
+class Chunker: 
     def __init__(self):
         pass 
-    
-    def load_documents(self, directory_path):
-        ''' 
-        Load all documents in directory
-        '''
-        reader = SimpleDirectoryReader(input_dir=directory_path)
-        return reader.load_data()
 
-    def chunk_documents(self, documents, chunk_size=256, overlap=32):
+    def word_wise_chunk_documents(self, documents, chunk_size=256, overlap=32):
         ''' 
         Chunk the text of each document, with overlaps for improved clarity. 
         Assign each chunk with a unique id and an index, and link it back to its parent.
