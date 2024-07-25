@@ -1,4 +1,4 @@
-// Sample document
+# Sample document
 {
   "@timestamp": "2024-07-24T10:30:00Z",
   "sensor_id": "AGR-001",
@@ -31,8 +31,8 @@ PUT _snapshot/agri_data_backup
 {
   "type": "gcs", // Specifies the repository type as Google Cloud Storage
   "settings": {
-    "bucket": "", // GCS bucket name
-    "client": "", // GCS client name
+    "bucket": "u852020b59c6641a089cd815ba28b6", // GCS bucket name
+    "client": "elastic-internal-95f1d8", // GCS client name
     "location": "snapshots/agri_data_backup" // Path within the bucket for snapshots
   }
 }
