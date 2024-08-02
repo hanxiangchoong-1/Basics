@@ -3,6 +3,7 @@ I have a demo flask app that I'm intending to use to test elastic security and o
 ```python
 app.py 
 from flask import Flask, request, jsonify
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
 from admin_routes import admin_bp
@@ -13,11 +14,14 @@ from psycopg2.extras import RealDictCursor
 import os
 from dotenv import load_dotenv
 
+
 # Load environment variables from .env file
 load_dotenv()
 
 app = Flask(__name__)
 app.register_blueprint(admin_bp, url_prefix='/admin')
+app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')
+jwt = JWTManager(app)
 
 # Initialize the database
 def init_db():
@@ -103,8 +107,9 @@ def login():
     if not user or not verify_password(user['password'], password):
         return jsonify({'error': 'Invalid credentials'}), 401
 
-    # In a real application, you would generate and return a JWT token here
-    return jsonify({'message': 'Login successful'}), 200
+    # Create the JWT token
+    access_token = create_access_token(identity=username)
+    return jsonify(access_token=access_token), 200
 
 if __name__ == '__main__':
     init_db()
