@@ -421,7 +421,7 @@ class ESQueryMaker(ESConnector):
         """
         try:
             # Parse the query_text and create the should clauses
-            should_clauses = self.parse_or_query(query_text, text_field)
+            # should_clauses = self.parse_or_query(query_text, text_field)
 
             search_body = {
                 "knn": {
@@ -434,10 +434,13 @@ class ESQueryMaker(ESConnector):
                     "bool": {
                         "must": [
                             {
-                                "bool": {
-                                    "should": should_clauses,
-                                    "minimum_should_match": 1
+                                "match":{
+                                    text_field:query_text
                                 }
+                                # "bool": {
+                                #     "should": should_clauses,
+                                #     "minimum_should_match": 1
+                                # }
                             }
                         ],
                         "should": [

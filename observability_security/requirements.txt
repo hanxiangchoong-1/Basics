@@ -1,0 +1,10 @@
+Flask
+Flask-SQLAlchemy
+psycopg2-binary
+PyJWT
+Werkzeug
+python-dotenv
+jwt 
+requests
+argon2-cffi
+flask-jwt-extended

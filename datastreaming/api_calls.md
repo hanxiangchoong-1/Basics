@@ -323,3 +323,188 @@ DELETE _ingest/pipeline/agri_data_stream_pipeline
 
 // Retrieve settings for the data stream
 GET agri_data_stream/_settings
+
+// Extremely comprehensive search query
+
+GET agri_data_stream/_search
+{
+  "size": 20,
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "range": {
+            "@timestamp": {
+              "gte": "now-30d",
+              "lte": "now"
+            }
+          }
+        },
+        {
+          "geo_bounding_box": {
+            "location": {
+              "top_left": {
+                "lat": 43.0,
+                "lon": -72.0
+              },
+              "bottom_right": {
+                "lat": 42.0,
+                "lon": -71.0
+              }
+            }
+          }
+        }
+      ],
+      "should": [
+        {
+          "match_phrase": {
+            "sensor_id": "AGR-001"
+          }
+        },
+        {
+          "range": {
+            "temp_celsius.air": {
+              "gte": 25,
+              "lte": 30
+            }
+          }
+        }
+      ],
+      "must_not": [
+        {
+          "term": {
+            "precipitation.rainfall_amount_mm": 0
+          }
+        }
+      ],
+      "filter": [
+        {
+          "range": {
+            "soil.ph": {
+              "gte": 6.5,
+              "lte": 7.5
+            }
+          }
+        }
+      ]
+    }
+  },
+  "sort": [
+    {
+      "@timestamp": {
+        "order": "desc"
+      }
+    },
+    {
+      "_geo_distance": {
+        "location": {
+          "lat": 42.3601,
+          "lon": -71.0589
+        },
+        "order": "asc",
+        "unit": "km"
+      }
+    }
+  ],
+  "aggs": {
+    "sensor_stats": {
+      "terms": {
+        "field": "sensor_id",
+        "size": 10
+      },
+      "aggs": {
+        "avg_temp": {
+          "avg": {
+            "field": "temp_celsius.air"
+          }
+        },
+        "max_humidity": {
+          "max": {
+            "field": "humidity_percent"
+          }
+        },
+        "total_rainfall": {
+          "sum": {
+            "field": "precipitation.rainfall_amount_mm"
+          }
+        },
+        "temp_percentiles": {
+          "percentiles": {
+            "field": "temp_celsius.air",
+            "percents": [25, 50, 75, 95]
+          }
+        },
+        "monthly_rainfall": {
+          "date_histogram": {
+            "field": "@timestamp",
+            "calendar_interval": "month"
+          },
+          "aggs": {
+            "total_rain": {
+              "sum": {
+                "field": "precipitation.rainfall_amount_mm"
+              }
+            }
+          }
+        }
+      }
+    },
+    "avg_soil_nutrients": {
+      "avg": {
+        "fields": ["soil.nitrogen_ppm", "soil.phosphorus_ppm", "soil.potassium_ppm"]
+      }
+    },
+    "temp_soil_correlation": {
+      "correlation": {
+        "variables": [
+          {
+            "field": "temp_celsius.air"
+          },
+          {
+            "field": "temp_celsius.soil"
+          }
+        ]
+      }
+    }
+  },
+  "highlight": {
+    "fields": {
+      "sensor_id": {}
+    }
+  },
+  "script_fields": {
+    "temp_fahrenheit": {
+      "script": {
+        "source": "params._source.temp_celsius.air * 1.8 + 32"
+      }
+    }
+  },
+  "runtime_mappings": {
+    "is_rainy": {
+      "type": "boolean",
+      "script": {
+        "source": "emit(doc['precipitation.rainfall_amount_mm'].value > 0)"
+      }
+    }
+  },
+  "docvalue_fields": [
+    "temp_celsius.air",
+    "temp_celsius.soil",
+    "humidity_percent"
+  ],
+  "collapse": {
+    "field": "sensor_id",
+    "inner_hits": {
+      "name": "latest_reading",
+      "size": 1,
+      "sort": [{"@timestamp": "desc"}]
+    }
+  },
+  "post_filter": {
+    "range": {
+      "soil.nitrogen_ppm": {
+        "gte": 40
+      }
+    }
+  }
+}
