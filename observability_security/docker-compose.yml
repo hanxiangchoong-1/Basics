@@ -1,7 +1,10 @@
+networks:
+  app_network:
+    driver: bridge
+
 services:
   db:
     image: postgres:13
-    container_name: demo-postgres
     environment:
       POSTGRES_DB: demoapp
       POSTGRES_USER: demouser
@@ -10,6 +13,45 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app_network
+      
+  app:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    volumes:
+      - .:/app
+    environment:
+      - FLASK_ENV=development
+      - FLASK_DEBUG=1
+      - LOGSTASH_HOST=logstash
+      - LOGSTASH_PORT=5000
+    command: flask run --host=0.0.0.0
+    depends_on:
+      - db
+      - logstash
+    networks:
+      - app_network
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:7.14.0
+    volumes:
+      - ./logstash.conf:/usr/share/logstash/pipeline/logstash.conf
+      - ./logstash.yml:/usr/share/logstash/config/logstash.yml
+    ports:
+      - "5000:5000/udp"
+    environment:
+      - ELASTIC_CLOUD_HOST=${ELASTIC_CLOUD_HOST}
+      - ELASTIC_USERNAME=${ELASTIC_USERNAME}
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+      - ELASTIC_INDEX_NAME=${ELASTIC_INDEX_NAME}
+    env_file:
+      - .env
+    networks:
+      - app_network
 
 volumes:
   postgres_data:

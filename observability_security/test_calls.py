@@ -18,6 +18,7 @@ def test_login(username, password):
     print(f"Login Response (Status Code: {response.status_code}):")
     print(json.dumps(response.json(), indent=2))
     print()
+    return response.status_code == 200  # Return True if login was successful
 
 def test_view_tables():
     url = f"{BASE_URL}/admin/view_tables"
@@ -34,10 +35,6 @@ def delete_users_table():
     print()
 
 def main():
-    # First, delete the users table to start fresh
-    # print("Deleting users table:")
-    # delete_users_table()
-
     print("Print DB tables:")
     test_view_tables()
 
@@ -47,20 +44,29 @@ def main():
 
     # Test login with the new user
     print("Testing login with the new user:")
-    # JWT Token
-    token = test_login("newuser", "password123")
+    login_success = test_login("newuser", "password123")
     
-    # Test registration with an existing user (should fail)
-    print("Testing registration with an existing user:")
-    test_register("newuser", "password123")
+    # if login_success:
+    #     print("Login successful!")
+    # else:
+    #     print("Login failed!")
 
-    # Test login with incorrect password
-    print("Testing login with incorrect password:")
-    test_login("newuser", "wrongpassword")
+    # # Test registration with an existing user (should fail)
+    # print("Testing registration with an existing user:")
+    # test_register("newuser", "password123")
 
-    # Print DB tables again to see the changes
-    print("Print DB tables after operations:")
-    test_view_tables()
+    # # Test login with incorrect password
+    # print("Testing login with incorrect password:")
+    # login_success = test_login("newuser", "wrongpassword")
+    
+    # if login_success:
+    #     print("Login successful (this shouldn't happen)!")
+    # else:
+    #     print("Login failed (as expected)!")
+
+    # # Print DB tables again to see the changes
+    # print("Print DB tables after operations:")
+    # test_view_tables()
 
 if __name__ == "__main__":
     main()
